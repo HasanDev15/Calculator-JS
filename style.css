@@ -1,0 +1,37 @@
+.calculator-button {
+  padding: 1em 0em 1em 0em;
+  height: auto;
+  width: 4.4vw;
+}
+.equal-sign {
+  background-color: #038a24;
+}
+.input {
+  height: auto;
+  width: 18.2vw;
+  font-size: larger;
+  padding: 0.5em 1em 0.5em 1em;
+}
+.variable-field {
+  width: 5.6vw;
+  height: auto;
+}
+.history {
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+  height: 20rem;
+  margin-top: 1rem;
+  overflow: auto;
+  width: 21rem;
+}
+.history > h5 {
+  padding: 5px;
+}
+.btn {
+  align-items: center;
+  display: flex;
+  height: 1.5rem;
+  font-size: 10px;
+  font-weight: bold;
+  justify-content: center;
+  width: 3rem;
+}
