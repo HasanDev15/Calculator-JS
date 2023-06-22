@@ -1,13 +1,18 @@
 let displayValue = "";
+let newVariable = {};
 
 function setValue(keyValue) {
+  let key = document.getElementById("display").value;
+  displayValue = key;
   displayValue += keyValue;
   document.getElementById("display").value = displayValue;
 }
 
 function clr() {
   displayValue = "";
-  document.getElementById("display").value = displayValue;
+  document.getElementById("display").value = "";
+  document.getElementById("name-field").value = "";
+  document.getElementById("value-field").value = "";
 }
 
 const precedence = {
@@ -19,13 +24,13 @@ const precedence = {
   sin: 4,
   cos: 4,
   tan: 4,
-  sqrt: 4,
+  sqr: 4,
 };
 
-function performOperation(operators, values) {
+function performOperation(operators, stack) {
   const operator = operators.pop();
-  const b = values.pop();
-  const a = values.pop();
+  const b = stack.pop();
+  const a = stack.pop();
   let result;
   switch (operator) {
     case "+":
@@ -52,80 +57,100 @@ function performOperation(operators, values) {
     case "tan":
       result = Math.tan(b);
       break;
-    case "sqrt":
+    case "sqr":
       result = Math.sqrt(b);
       break;
   }
-  values.push(result);
+  stack.push(result);
 }
 
 function calculateExpression(expression) {
   const operators = [];
-  const values = [];
+  const stack = [];
 
   let i = 0;
   while (i < expression.length) {
+    const numRegex = /\d|\./;
+    const charRegex = /[A-Za-z]/;
+    const operatorRegex = /[+\-*/^]/;
+
     const currentChar = expression[i];
-    if (/\d|\./.test(currentChar)) {
+
+    if (numRegex.test(currentChar)) {
       let number = "";
-      while (i < expression.length && /\d|\./.test(expression[i])) {
+      while (i < expression.length && numRegex.test(expression[i])) {
         number += expression[i];
         i++;
       }
-      values.push(parseFloat(number));
+      stack.push(parseFloat(number));
+      continue;
+    } else if (
+      charRegex.test(currentChar) &&
+      expression.substr(i, 3) !== "sin" &&
+      expression.substr(i, 3) !== "cos" &&
+      expression.substr(i, 3) !== "tan" &&
+      expression.substr(i, 3) !== "sqr"
+    ) {
+      let variable = "";
+      while (i < expression.length && charRegex.test(expression[i])) {
+        let item = expression[i];
+        variable += newVariable[item];
+        i++;
+      }
+      stack.push(parseFloat(variable));
       continue;
     } else if (currentChar === "(") {
       operators.push(currentChar);
     } else if (currentChar === ")") {
       while (operators.length > 0 && operators[operators.length - 1] !== "(") {
-        performOperation(operators, values);
+        performOperation(operators, stack);
       }
       operators.pop();
-    } else if (/[+\-*/^]/.test(currentChar)) {
+    } else if (operatorRegex.test(currentChar)) {
       while (
         operators.length > 0 &&
         operators[operators.length - 1] !== "(" &&
         precedence[operators[operators.length - 1]] >= precedence[currentChar]
       ) {
-        performOperation(operators, values);
+        performOperation(operators, stack);
       }
       operators.push(currentChar);
-    } else if (expression.substr(i, 3) === "sin") {
-      operators.push("sin");
+    } else if (
+      expression.substr(i, 3) === "sin" ||
+      expression.substr(i, 3) === "cos" ||
+      expression.substr(i, 3) === "tan" ||
+      expression.substr(i, 3) === "sqr"
+    ) {
+      let substr = expression.substr(i, 3);
+      operators.push(substr);
       i += 2;
-    } else if (expression.substr(i, 3) === "cos") {
-      operators.push("cos");
-      i += 2;
-    } else if (expression.substr(i, 3) === "tan") {
-      operators.push("tan");
-      i += 2;
-    } else if (expression.substr(i, 4) === "sqrt") {
-      operators.push("sqrt");
-      i += 3;
     }
+
     i++;
   }
 
   while (operators.length > 0) {
-    performOperation(operators, values);
+    performOperation(operators, stack);
   }
 
-  return values[0];
+  return stack[0];
 }
 
-let customVariables = [];
 const variableButton = document.getElementById("variableButton");
 
 variableButton.addEventListener("click", function () {
-  let constant = document.getElementById("name-field").value;
+  let variable = document.getElementById("name-field").value;
   let value = document.getElementById("value-field").value;
+  let alert = document.getElementById("myAlert");
 
-  let newVariable = {
-    constant: value,
-  };
-
-  customVariables.push(newVariable);
-  //   console.log(customVariables[0].constant)
+  if (!newVariable.hasOwnProperty(variable)) {
+    newVariable = {
+      ...newVariable,
+      [variable]: value,
+    };
+  } else {
+    alert.style.display = "block";
+  }
 });
 
 const calculateBtn = document.getElementById("calculateBtn");
@@ -133,7 +158,6 @@ let calculationHistory = [];
 
 calculateBtn.addEventListener("click", function () {
   let expression = document.getElementById("display").value;
-  //   expression += customVariables[0].constant
 
   try {
     const result = calculateExpression(expression);
